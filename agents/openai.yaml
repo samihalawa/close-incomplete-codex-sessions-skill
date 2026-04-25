@@ -1,0 +1,11 @@
+name: close-incomplete-codex-sessions-skill
+description: Sweep the last N local Codex CLI sessions in parallel, push each thread to ship its highest-value remaining gain end-to-end, archive the originals, sweep any uncommitted artifacts, commit + push, and re-fire the Cloud Build pipeline if its trigger is disabled.
+triggers:
+  - "close codex threads"
+  - "finish codex sessions"
+  - "orchestrate codex threads"
+  - "archive codex sessions"
+  - "drain codex backlog"
+  - "close codex inbox"
+  - "finish the last 20 codex sessions"
+entrypoint: SKILL.md
