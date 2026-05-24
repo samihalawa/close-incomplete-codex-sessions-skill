@@ -7,7 +7,7 @@ description: Sweep the last N local Codex CLI sessions in parallel, push each th
 
 Drain the local Codex CLI inbox: send each unfinished session a compact finish-line prompt in parallel, archive the originals, sweep the artifacts the agents leave behind into the repo, then verify the deploy actually fires.
 
-Targets the local Codex CLI sessions stored at ~/.codex/sessions/**/rollout-*.jsonl, not the ChatGPT Codex web app.
+Targets the local Codex CLI sessions stored at \~/.codex/sessions/\*\*/rollout-\*.jsonl, not the ChatGPT Codex web app.
 
 ## When To Use
 
@@ -18,7 +18,7 @@ Targets the local Codex CLI sessions stored at ~/.codex/sessions/**/rollout-*.js
 
 - The prompt sent to each thread must be compact and contain no filenames, no project specifics, no agent-self-instructions. The compact prompt below is canonical, do not edit it to inject details.
 - Default sweep window is 20 sessions sorted by mtime, excluding sessions touched in the last 5 minutes. Those are likely the current Codex Desktop or CLI sessions and prompting them would self-loop.
-- Treat the original rollout-*.jsonl files as untouchable until each agent has actually started reading them. Move to ~/.codex/archived_sessions/ only after dispatch.
+- Treat the original rollout-\*.jsonl files as untouchable until each agent has actually started reading them. Move to \~/.codex/archived_sessions/ only after dispatch.
 - After the agents finish, repo state must end in: clean working tree, local main equals origin/main, deploy pipeline confirmed firing.
 - Never use --no-verify or --no-gpg-sign. If the pre-push tsc hook fails with a phantom error, it is usually a race against agents still rewriting files. Wait for processes to drain, then re-run.
 
@@ -30,15 +30,15 @@ Targets the local Codex CLI sessions stored at ~/.codex/sessions/**/rollout-*.js
 
 ### 1. Inventory The Last N Sessions
 
-Resolve absolute paths under ~/.codex/sessions/ sorted by mtime descending. For each, parse the first jsonl line for payload.id and payload.cwd. Skip any whose mtime is within the last 5 minutes.
+Resolve absolute paths under \~/.codex/sessions/ sorted by mtime descending. For each, parse the first jsonl line for [payload.id](http://payload.id) and payload.cwd. Skip any whose mtime is within the last 5 minutes.
 
 ### 2. Dispatch In Parallel
 
-For each row, launch codex exec resume <id> "<compact-prompt>" --full-auto in the background, cwd into the session's original working dir. Add --skip-git-repo-check for non-git cwds. Stream each agent's output to /tmp/codex-orchestrate/<id>.log.
+For each row, launch `codex exec resume <id> "<compact-prompt>" --full-auto` in the background, cwd into the session's original working dir. Add `--skip-git-repo-check` for non-git cwds. Stream each agent's output to `/tmp/codex-orchestrate/<id>.log`.
 
 ### 3. Archive The Originals
 
-After about 5 seconds, move every original out of the active inbox into ~/.codex/archived_sessions/.
+After about 5 seconds, move every original out of the active inbox into \~/.codex/archived_sessions/.
 
 ### 4. Wait For Drain, Classify Outcomes
 
