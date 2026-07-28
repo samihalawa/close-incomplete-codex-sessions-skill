@@ -1,6 +1,6 @@
 ---
 name: close-incomplete-codex-sessions-skill
-description: Sweep the last N local Codex CLI sessions in parallel, push each thread to ship its highest-value remaining gain end-to-end, archive the originals, sweep any uncommitted artifacts they produced, commit and push, and re-fire the Cloud Build pipeline if its trigger is disabled. Use when the user asks to close codex threads, finish codex sessions, orchestrate codex threads, archive codex inbox, drain codex backlog, or any phrase about parallelly closing out unfinished local Codex work.
+description: Sweep the last N local Codex CLI sessions in parallel, push each thread to ship its highest-value remaining gain end-to-end, archive the originals, sweep any uncommitted artifacts they produced, commit and push, and verify the current repository deployment pipeline. Use when the user asks to close codex threads, finish codex sessions, orchestrate codex threads, archive codex inbox, drain codex backlog, or any phrase about parallelly closing out unfinished local Codex work.
 ---
 
 # Close Incomplete Codex Sessions Skill
@@ -59,9 +59,14 @@ If the pre-push hook tsc --noEmit fires a transient error like Cannot find name 
 
 Drop stale agent worktrees and branches the run created. Use git worktree list, git worktree remove --force, git worktree prune -v, git branch -D, git push origin :branch. Only drop a branch when its sha is reachable from origin/main or content-superseded by a newer commit on main.
 
-### 7. Verify Deploy Pipeline Fires
+### 7. Verify The Current Deploy Pipeline Fires
 
-The most-missed problem: the project may have a Cloud Build trigger that is disabled. Check it with gcloud builds triggers list. If disabled, fire it manually against current HEAD with gcloud builds triggers run so the pushed commits actually deploy. Do not silently re-enable, disabled state may be intentional. Report it and let the user decide.
+Read the repo instructions and deployment configuration to identify the current
+provider. For OULANG, inspect Coolify application/deployment state and prove the
+exact pushed commit reached the live route. For another repo, use its actual
+GitHub Actions, Coolify, Netlify, Vercel, store, or provider workflow. Do not
+infer Cloud Build from old session text and do not create a parallel deploy
+route merely because the current trigger failed.
 
 ### 8. Final Report
 
@@ -72,5 +77,6 @@ Output and only this: N inventoried/dispatched/archived, per-thread classificati
 - Editing the canonical compact prompt to inject project specifics. The whole point is that the agent decides.
 - Waiting on codex exec resume synchronously. They take minutes, always background.
 - Committing fastlane, IPA, or report.xml churn. Those belong to in-flight fastlane ios upload runs, not this sweep.
-- Running gcloud builds submit from local. Packaging the source via gzip locally hits Python edge cases on macOS. Use gcloud builds triggers run so the build pulls source from GitHub directly.
+- Reusing an obsolete provider command from an old session instead of reading
+  the repo's current deployment source.
 - Treating "all logs say DONE" as success. Always re-check git status and remote-vs-local sha before claiming closure, agents may have written files outside their stdout.
