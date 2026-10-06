@@ -1,82 +1,14 @@
 ---
 name: close-incomplete-codex-sessions-skill
-description: Sweep the last N local Codex CLI sessions in parallel, push each thread to ship its highest-value remaining gain end-to-end, archive the originals, sweep any uncommitted artifacts they produced, commit and push, and verify the current repository deployment pipeline. Use when the user asks to close codex threads, finish codex sessions, orchestrate codex threads, archive codex inbox, drain codex backlog, or any phrase about parallelly closing out unfinished local Codex work.
+description: Finish a user-selected cohort of unfinished Codex chats through the canonical native app workflow, verify each requested outcome, and archive only within the user's scope. Compatibility entry point for finishing sessions or draining a backlog.
 ---
 
-# Close Incomplete Codex Sessions Skill
+# Close Incomplete Codex Sessions
 
-Drain the local Codex CLI inbox: send each unfinished session a compact finish-line prompt in parallel, archive the originals, sweep the artifacts the agents leave behind into the repo, then verify the deploy actually fires.
+Use the Finish unfinished chats mode in [$codex-internal-tools-threads-plans-goals-skill](../codex-internal-tools-threads-plans-goals-skill/SKILL.md). That skill owns inventory, native continuation, resource ownership, waiting, proof, archival, and the exact local CLI fallback. This name is retained as a compatibility entry point without another dispatch implementation.
 
-Targets the local Codex CLI sessions stored at \~/.codex/sessions/\*\*/rollout-\*.jsonl, not the ChatGPT Codex web app.
+Load the installed sibling skill through the harness's skill reader or filesystem. If missing, use its [canonical source](https://github.com/samihalawa/codex-internal-tools-threads-plans-goals-skill/blob/main/SKILL.md). Preserve the requested cohort and authority while resolving that dependency.
 
-## When To Use
+A request to finish chats authorizes their in-scope continuation; an archive-only request authorizes archival, not new execution. Updating this skill does not launch a sweep. Do not resume every recent rollout, send a universal commit/push/deploy prompt, archive after a five-second timer, move original rollout files, collect unrelated edits, or force-delete shared resources.
 
-- The user says: "orchestrate codex threads", "finish the last N codex sessions", "close codex inbox", "archive codex sessions", "drain codex backlog", or any near-paraphrase.
-- The user is frustrated that earlier Codex runs left half-shipped work, uncommitted diffs, unmerged branches, or stuck deploys.
-
-## Hard Rules
-
-- The prompt sent to each thread must be compact and contain no filenames, no project specifics, no agent-self-instructions. The compact prompt below is canonical, do not edit it to inject details.
-- Default sweep window is 20 sessions sorted by mtime, excluding sessions touched in the last 5 minutes. Those are likely the current Codex Desktop or CLI sessions and prompting them would self-loop.
-- Treat the original rollout-\*.jsonl files as untouchable until each agent has actually started reading them. Move to \~/.codex/archived_sessions/ only after dispatch.
-- After the agents finish, repo state must end in: clean working tree, local main equals origin/main, deploy pipeline confirmed firing.
-- Never use --no-verify or --no-gpg-sign. If the pre-push tsc hook fails with a phantom error, it is usually a race against agents still rewriting files. Wait for processes to drain, then re-run.
-
-## Compact Finish-Line Prompt (canonical, do not edit)
-
-> Reconstruct the true finish line of this thread from its own context. Ship the highest-value remaining gain end-to-end, implemented, verified, committed, pushed. Do not re-audit, execute. If already fully shipped on main, reply DONE and stop. Prefer the fastest reliable path. No confirmations.
-
-## Workflow
-
-### 1. Inventory The Last N Sessions
-
-Resolve absolute paths under \~/.codex/sessions/ sorted by mtime descending. For each, parse the first jsonl line for [payload.id](http://payload.id) and payload.cwd. Skip any whose mtime is within the last 5 minutes.
-
-### 2. Dispatch In Parallel
-
-For each row, launch `codex exec resume <id> "<compact-prompt>" --full-auto` in the background, cwd into the session's original working dir. Add `--skip-git-repo-check` for non-git cwds. Stream each agent's output to `/tmp/codex-orchestrate/<id>.log`.
-
-### 3. Archive The Originals
-
-After about 5 seconds, move every original out of the active inbox into \~/.codex/archived_sessions/.
-
-### 4. Wait For Drain, Classify Outcomes
-
-When pgrep -af codex exec resume reaches 0, classify each log by its tail.
-
-- Tail equals DONE: already shipped, no action.
-- Tail mentions fatal: Unable to create .git/index.lock or could not commit: sandbox blocked git, the agent did real work that now sits uncommitted in the repo.
-- Tail mentions LINEAR: not updated or already shipped: no action.
-- Anything else: read the full log, decide case-by-case.
-
-### 5. Sweep Uncommitted Artifacts
-
-For every cwd that hosted a sandbox-blocked agent, run git status and git diff. Group changes into atomic commits by intent, write clean conventional-commit messages that describe the change only, no agent prompts, no transcripts. Commit, then push. If a parallel Codex Desktop agent is committing concurrently, expect the working tree to keep changing. Re-check git status between commits.
-
-If the pre-push hook tsc --noEmit fires a transient error like Cannot find name X against an unmodified file, that is usually a race with concurrent agent writes. Confirm with pgrep codex and retry once they are done. Do not bypass with --no-verify.
-
-### 6. Repo Hygiene
-
-Drop stale agent worktrees and branches the run created. Use git worktree list, git worktree remove --force, git worktree prune -v, git branch -D, git push origin :branch. Only drop a branch when its sha is reachable from origin/main or content-superseded by a newer commit on main.
-
-### 7. Verify The Current Deploy Pipeline Fires
-
-Read the repo instructions and deployment configuration to identify the current
-provider. For OULANG, inspect Coolify application/deployment state and prove the
-exact pushed commit reached the live route. For another repo, use its actual
-GitHub Actions, Coolify, Netlify, Vercel, store, or provider workflow. Do not
-infer Cloud Build from old session text and do not create a parallel deploy
-route merely because the current trigger failed.
-
-### 8. Final Report
-
-Output and only this: N inventoried/dispatched/archived, per-thread classification counts, atomic commits landed by sha plus one-line subject, worktrees and branches cleaned, deploy trigger state and manual-fire op-id and live last-modified after build, anything still pending with exact blocker and exact next command.
-
-## Anti-Patterns
-
-- Editing the canonical compact prompt to inject project specifics. The whole point is that the agent decides.
-- Waiting on codex exec resume synchronously. They take minutes, always background.
-- Committing fastlane, IPA, or report.xml churn. Those belong to in-flight fastlane ios upload runs, not this sweep.
-- Reusing an obsolete provider command from an old session instead of reading
-  the repo's current deployment source.
-- Treating "all logs say DONE" as success. Always re-check git status and remote-vs-local sha before claiming closure, agents may have written files outside their stdout.
+Report inventoried, actually dispatched, completed with proof, archived, and blocked separately. Preserve the original tasks' real finish lines and verify every target before claiming the batch complete. Maintain all shared procedure in the canonical skill.
